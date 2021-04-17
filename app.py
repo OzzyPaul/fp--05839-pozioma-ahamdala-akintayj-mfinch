@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import altair as alt
 import datetime
-from pyngrok import ngrok
 import seaborn as sns
 import matplotlib.animation as ani
 #st.markdown("<h1 style='text-align: center; color: black;'>Your Household Income and Your Future?</h1>", unsafe_allow_html=True)
