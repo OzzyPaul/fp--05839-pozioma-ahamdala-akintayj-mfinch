@@ -5,7 +5,7 @@
   * Contact person: TODO@andrew.cmu.edu
   * TODO@andrew.cmu.edu
   * TODO@andrew.cmu.edu
-  * TODO@andrew.cmu.edu
+  * mfinch@andrew.cmu.edu
 * **Track**: TODO (one of Narrative or Interactive Visualization/Application)
 
 ## Work distribution
