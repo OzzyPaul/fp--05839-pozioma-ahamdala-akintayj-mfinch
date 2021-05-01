@@ -1,0 +1,8 @@
+ipykernel
+notebook
+pandas
+numpy
+matplotlib
+streamlit
+altair
+sklearn
