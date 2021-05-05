@@ -2,8 +2,8 @@
 
 * **Online URL**: TODO
 * **Team members**:
-  * Contact person: ahamdala@andrew.cmu.edu
-  * akintayj@andrew.cmu.edu
+  * Contact person: akintayj@andrew.cmu.edu
+  * ahamdala@andrew.cmu.edu
   * pozioma@andrew.cmu.edu
   * mfinch@andrew.cmu.edu
 * **Track**: Narrative Visualization
