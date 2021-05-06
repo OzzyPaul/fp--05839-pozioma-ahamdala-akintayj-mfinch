@@ -8,9 +8,9 @@ import matplotlib.animation as ani
 #st.markdown("<h1 style='text-align: center; color: black;'>Your Household Income and Your Future?</h1>", unsafe_allow_html=True)
 
 opening_paragraph = """
-                      Are children from households with higher income more likely to earn more in their adulthood? 
+                      Are children from households with higher income more likely to earn more after their university education? 
                       Typically, household income determines the types of opportunities that are available to a child.
-                      Does household income also affect the types of colleges that kids get into?""" 
+                      Does household income also affect the types of colleges/universities or tertiary institutions that their children get into?""" 
 
 first_paragraph = """In the US, children from high income families tend to attend more prestigious colleges. The mean income 
                       of households varies significantly between high ranking and low ranking colleges. The mean income of parents of
@@ -20,7 +20,7 @@ first_paragraph = """In the US, children from high income families tend to atten
 
 
 # Can we, perhaps have a viz that shows household income distribution for various college tiers. 
-df = pd.read_csv("/content/drive/MyDrive/mrc_table2.csv")
+df = pd.read_csv("mrc_table2.csv")
 df_reduced = df[['name', 'type', 'tier', 'tier_name', 'iclevel', 'par_mean', 'par_median', 'par_rank', 'k_mean', 'k_median', 'k_rank', 'k_median_nozero', 'k_0inc', 'k_q1', 'k_q2', 'k_q3', 'k_q4', 'k_q5']]
 df_reduced_par = df_reduced[['tier_name', 'par_mean', 'par_median', 'par_rank', 'k_q1', 'k_q2', 'k_q3', 'k_q4', 'k_q5']]
 

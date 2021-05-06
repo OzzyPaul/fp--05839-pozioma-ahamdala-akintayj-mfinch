@@ -120,8 +120,8 @@ def people_plot(df, select):
         alt.X('col:O', axis=None),
         alt.Y("row:O", axis=None),
         alt.Shape("data:N", legend = None, scale=shape_scale),
-        alt.Color("data:N", legend = alt.Legend(title = "Parent\'s Income"), scale=color_scale)
-    ).add_selection(select).transform_filter(select)
+        alt.Color("data:N", legend = alt.Legend(title = "Income classes"), scale=color_scale)
+    ).add_selection(select).transform_filter(select).properties(title = "Parent\'s Income")
 
     return df_new1, people_chart
 
@@ -166,44 +166,52 @@ def Joint_Prob_plot(df):
             sort = income_classy,
             axis=alt.Axis(title='Children\'s Income Class')),
         color=color
-        ).add_selection(select).transform_filter(select).properties(height=200, width = 200)
+        ).add_selection(select).transform_filter(select).properties(
+            height=300, width=300, title='Children Vs Parents Income Distribution Heatmap')
 
     color_scale = alt.Scale(
         domain=income_class,
         range=['#4c78a8', '#f58518', '#e45756', '#72b7b2', '#54a24b']
     )
     p_mag_1 = base.mark_bar().encode(
-        x = alt.X("p:N",
+        y = alt.Y("p:N",
             sort = income_class, 
             axis=alt.Axis(title='Income Quintiles')),
-        y = alt.Y('sum(MR):Q', 
+        x = alt.X('sum(MR):Q', 
             scale=alt.Scale(domain=(0,1)), 
-            axis=alt.Axis(title='Parent\'s Income Probability Distribution')),
+            axis=alt.Axis(title='Probabilities (p)')),
         color = alt.Color('k:N', 
             scale=color_scale,
             legend = alt.Legend(title=None)),
         order=alt.Order(aggregate='sum', type="quantitative", sort='descending')
-        ).add_selection(select).transform_filter(select).properties(height = 150, width=200)
-
+        ).add_selection(select).transform_filter(select).properties(
+            height=300, width=300, title='Parent\'s Income Probability Distribution')
 
     k_mag_1 = base.mark_bar().encode(
         y = alt.Y("k:N", 
             sort = income_classy,
             axis=alt.Axis(title='Income Quintiles')),
         x = alt.X('sum(MR):Q', 
-            axis=alt.Axis(title='Children\'s Income Probability Distribution'),
+            axis=alt.Axis(title='Probabilities (k)'),
             scale=alt.Scale(domain=(0,1))),
         color = alt.Color('p:N', 
             scale=color_scale,
             legend = alt.Legend(title=None), 
             sort=alt.EncodingSortField('p', order='ascending')),
             order=alt.Order(aggregate='sum', type="quantitative", sort='descending')
-        ).add_selection(select).transform_filter(select).properties(height=200, width = 150)
+        ).add_selection(select).transform_filter(select).properties(
+            height=300, width=300, title='Children\'s Income Probability Distribution')
         
     _, people_c = people_plot(df,select)
     people_c = people_c.properties(width=300, height = 300)
+
+    JPP_explanation = """The probability distribution charts below show actual and forecasted household as well as children's income classes.
+                        The horizontal axes for both charts indicate the probabilities (forecast) of the parents/children belonging to each of the five income classes on the vertical axes.
+                        The stacks on each vertical bar show the actual income distributions within the forecasted classes i.e how many households/children actually fall in the forecasted class. The income classes are color-coded.
+                    """
+    st.write(JPP_explanation)
     
-    return (p_mag_1 & (joint_chart | k_mag_1) & people_c).resolve_scale(color='independent').configure_axis(titleFontWeight = "normal")
+    return (p_mag_1 & k_mag_1 & joint_chart & people_c).resolve_scale(color='independent').configure_axis(titleFontWeight = "normal")
     
 ##
 # cluster helper funcs
@@ -273,6 +281,20 @@ def filter_name(df, name):
 ##
 
 def cluster_plot(data, U_df, U_Name):
+
+    cp_note = """ 
+                The two plots below - the scatter plot and the horizontal stacked bar chart show how the children that attend colleges/universities turn out in the income 
+                mobility ladder based on the tier of higher learning that they attend(ed).
+
+                The scatter plot clusters the schools based on the college tier that they belong and consequently displays the student income mobility direction in the haorizontal stacked bar chart below it.
+
+                What is interesting here is this bar chart also indicates the proportion of this income class movement, down to each income class, while also color coding the movements as follows: 
+                * Green: The student/child moved upwards from their household's income class
+                * Yellow: The student/child maintains the same income level as their household
+                * Red: The student/child drops from their houshold's income class
+            """
+
+    st.write(cp_note)
 
     U_tier = data.groupby(["name","tier_name"]).mean()
     U_tier = U_tier.reset_index()
