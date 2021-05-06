@@ -92,19 +92,22 @@ def Par_income_pre(df):
 def people_plot(df, select):
     # people 
     df_new1 = Par_income_pre(df)
-
+    
     person_img = 'M1.7 -1.7h-0.8c0.3 -0.2 0.6 -0.5 0.6 -0.9c0 -0.6 -0.4 -1 -1 -1c-0.6 0 -1 0.4 -1 1c0 0.4 0.2 0.7 0.6 0.9h-0.8c-0.4 0 -0.7 0.3 -0.7 0.6v1.9c0 0.3 0.3 0.6 0.6 0.6h0.2c0 0 0 0.1 0 0.1v1.9c0 0.3 0.2 0.6 0.3 0.6h1.3c0.2 0 0.3 -0.3 0.3 -0.6v-1.8c0 0 0 -0.1 0 -0.1h0.2c0.3 0 0.6 -0.3 0.6 -0.6v-2c0.2 -0.3 -0.1 -0.6 -0.4 -0.6z'
-        
+ 
+    income_class8 = ["Lower class", "Working class", "Lower middle class", "Upper middle class", "Upper class", "Upper class (10%)","Upper class (1%)", "Upper class (0.1%)"]
     domains = ["par_q1","par_q2","par_q3","par_q4","par_q5", "par_top10pc", "par_top1pc", 'par_toppt1pc']
-
+    for i in range(0,8): 
+        df_new1.loc[df_new1["data"] == domains[i], "data"] = income_class8[i]
+    
     shape_scale = alt.Scale(
-        domain=domains,
+        domain=income_class8,
         range = [person_img, person_img, person_img, person_img, person_img, person_img, person_img, person_img]
     )
 
     color_scale = alt.Scale(
-        domain=domains,
-        range=['#4c78a8', '#f58518', '#e45756', '#72b7b2', '#54a24b', '#54a200', '#00a235', '#45ff00']
+        domain=income_class8,
+        range=['#4c78a8', '#f58518', '#e45756', '#72b7b2', '#54a24b', '#454B1B', '#00a235', '#45ff00']
     )
 
     base1 = alt.Chart(df_new1)
@@ -117,14 +120,17 @@ def people_plot(df, select):
         alt.X('col:O', axis=None),
         alt.Y("row:O", axis=None),
         alt.Shape("data:N", legend = None, scale=shape_scale),
-        alt.Color("data:N", legend = None, scale=color_scale)
+        alt.Color("data:N", legend = alt.Legend(title = "Parent\'s Income"), scale=color_scale)
     ).add_selection(select).transform_filter(select)
 
-    return people_chart
+    return df_new1, people_chart
 
 ##    
 # https://stackoverflow.com/questions/55700724/controlling-stack-order-of-an-altair-area
 # https://nextjournal.com/sdanisch/multi-view-composition
+# https://stackoverflow.com/questions/31511997/pandas-dataframe-replace-all-values-in-a-column-based-on-condition/31512025
+# http://bebi103.caltech.edu.s3-website-us-east-1.amazonaws.com/2018/tutorials/t1b_plotting.html
+# https://github.com/altair-viz/altair/issues/1826
 ##
 
 def Joint_Prob_plot(df):
@@ -136,50 +142,68 @@ def Joint_Prob_plot(df):
     
     df_new = df.apply(lambda row: gen_plot_df(row), axis = 1)
     df_new = pd.concat(list(df_new))
+    
+    income_class = ["Lower class", "Working class", "Lower middle class", "Upper middle class", "Upper class"]
+    income_classy = ["Upper class","Upper middle class", "Lower middle class", "Working class", "Lower class"]
+    
+    for i in range(0,5): 
+        df_new.loc[df_new["k"] == i+1, "k"] = income_class[i]
+        df_new.loc[df_new["p"] == i+1, "p"] = income_class[i]
+
 
     base = alt.Chart(df_new)
 
     # chart on Joint Prob
 
     plot_scale = alt.Scale(type="pow", exponent=0.5, scheme = "greens", nice = True)
-    color = alt.Color('MR:Q', scale = plot_scale)
+    color = alt.Color('MR:Q', scale = plot_scale, legend=alt.Legend(title="Mobility Rate"))
 
     joint_chart = base.mark_rect().encode(
-        x="p:O",
-        y=alt.Y('k:O',
-            sort=alt.EncodingSortField('k', order='descending')),
-            color=color
+        x=alt.X("p:N", 
+            sort = income_class,
+            axis=alt.Axis(title='Parent\'s Income Class')),
+        y=alt.Y('k:N', 
+            sort = income_classy,
+            axis=alt.Axis(title='Children\'s Income Class')),
+        color=color
         ).add_selection(select).transform_filter(select).properties(height=200, width = 200)
 
     color_scale = alt.Scale(
-        domain=['1','2','3','4','5'],
+        domain=income_class,
         range=['#4c78a8', '#f58518', '#e45756', '#72b7b2', '#54a24b']
     )
     p_mag_1 = base.mark_bar().encode(
-        x = alt.X("p:O"),
-        y = alt.Y('sum(MR):Q', scale=alt.Scale(domain=(0,1))),
-        color = alt.Color('k:O', 
+        x = alt.X("p:N",
+            sort = income_class, 
+            axis=alt.Axis(title='Income Quintiles')),
+        y = alt.Y('sum(MR):Q', 
+            scale=alt.Scale(domain=(0,1)), 
+            axis=alt.Axis(title='Parent\'s Income Probability Distribution')),
+        color = alt.Color('k:N', 
             scale=color_scale,
-            legend = None),
+            legend = alt.Legend(title=None)),
         order=alt.Order(aggregate='sum', type="quantitative", sort='descending')
         ).add_selection(select).transform_filter(select).properties(height = 150, width=200)
 
 
     k_mag_1 = base.mark_bar().encode(
-        y = alt.Y("k:O", 
-            sort=alt.EncodingSortField('k', order='descending') ),
-        x = alt.X('sum(MR):Q', scale=alt.Scale(domain=(0,1))),
-        color = alt.Color('p:O', 
-            scale=color_scale, 
-            sort=alt.EncodingSortField('p', order='ascending'),
-            legend = None),
+        y = alt.Y("k:N", 
+            sort = income_classy,
+            axis=alt.Axis(title='Income Quintiles')),
+        x = alt.X('sum(MR):Q', 
+            axis=alt.Axis(title='Children\'s Income Probability Distribution'),
+            scale=alt.Scale(domain=(0,1))),
+        color = alt.Color('p:N', 
+            scale=color_scale,
+            legend = alt.Legend(title=None), 
+            sort=alt.EncodingSortField('p', order='ascending')),
             order=alt.Order(aggregate='sum', type="quantitative", sort='descending')
         ).add_selection(select).transform_filter(select).properties(height=200, width = 150)
-
-
-    people_c = people_plot(df,select).properties(width=300, height = 300)
-
-    return (p_mag_1 & (joint_chart | k_mag_1) & people_c).resolve_scale(color='independent')
+        
+    _, people_c = people_plot(df,select)
+    people_c = people_c.properties(width=300, height = 300)
+    
+    return (p_mag_1 & (joint_chart | k_mag_1) & people_c).resolve_scale(color='independent').configure_axis(titleFontWeight = "normal")
     
 ##
 # cluster helper funcs
@@ -229,10 +253,23 @@ def gen_plot_df_name(r1):
     
     return data_pre(plot_df)
 
+def distance(df1, df2):
+    dneg = df1["neg"] - df2["neg"]
+    dpos = df1["pos"] - df2["pos"]
+    dsame = df1["same"] - df2["same"]
+    return np.sqrt(dneg*dneg+dpos*dpos+dsame*dsame)
+
+def filter(df, t_name,U_name):
+    df_new = df.loc[df['tier_name']==t_name]
+    df_new = df_new.loc[df_new["name"]!=U_name]
+    df_new = df_new.sort_values(by=["distance","name"], ascending=True)[:10]
+    return df_new
+
+def filter_name(df, name):
+    return df.loc[df["name"]==name]
 
 ##
 # https://stackoverflow.com/questions/59381202/python-altair-condition-color-opacity
-#
 ##
 
 def cluster_plot(data, U_df, U_Name):
@@ -265,14 +302,31 @@ def cluster_plot(data, U_df, U_Name):
     sel = alt.selection_single(fields=["tier_name"], bind='legend', init={'tier_name':int_val}, nearest=True, empty="none")
     color = alt.condition(sel, alt.Color('tier_name:N', scale=alt.Scale(scheme='set1')), alt.value('lightgray') )
     opacity = alt.condition(sel, alt.value(1.0), alt.value(0.25))
+
+    d = university_df(finaldf, U_Name)
+    finaldf["distance"] = finaldf.apply(lambda x: distance(x,d), axis = 1)
+    t_name = finaldf["tier_name"].unique()
+
+    df_new = pd.DataFrame()
+    for name in t_name:
+        df_new = pd.concat([df_new,filter(finaldf,name, U_Name)])
+    
+    df_new = df_new.reset_index()
+    name1 = list(df_new["name"].unique())
+        
+    s_new = pd.DataFrame()
+    d_new = pd.DataFrame()
+    for n in name1:
+        s_new = pd.concat([s_new,filter_name(source,n)], axis = 0)
+        d_new = pd.concat([d_new,filter_name(finaldf,n)], axis = 0)
     
 ##
 ## Cluster Plot
 ## 
 
     cluster_plot = alt.Chart(finaldf).mark_point(size=50, filled=True, fillOpacity=1).encode(
-        alt.X("F1:Q", sort = alt.Sort('ascending')),
-        alt.Y("F2:Q"),
+        alt.X("F1:Q", sort = alt.Sort('descending'), axis=None),
+        alt.Y("F2:Q", axis = None),
         color = color,
         opacity=opacity,
         tooltip=['name','pos','same','neg', "tier_name"]
@@ -282,28 +336,62 @@ def cluster_plot(data, U_df, U_Name):
 ## Cross Plot
 ##
 
-    cross_u = alt.Chart(university_df(finaldf, U_Name)).mark_point(size = 250, shape = 'diamond', filled = True).encode( 
-    alt.X("F1:Q", sort = alt.Sort('ascending')),
-    alt.Y("F2:Q"),
+    cross_u = alt.Chart(d).mark_point(size = 250, shape = 'diamond', filled = True).encode( 
+    alt.X("F1:Q", sort = alt.Sort('descending'), axis = None),
+    alt.Y("F2:Q", axis = None),
     color = alt.Color('tier_name:N', scale=alt.Scale(scheme='set1'))
     )
 
+    cross_y = alt.Chart(d_new).mark_point(size = 250, shape = 'cross', filled = True).encode( 
+    alt.X("F1:Q", sort = alt.Sort('descending'), axis =None ),
+    alt.Y("F2:Q", axis = None),
+    color = alt.Color('tier_name:N', 
+        scale=alt.Scale(scheme='set1'),
+        legend=alt.Legend(title=None)
+        )
+    ).transform_filter(sel)
+
+ 
 ##
 ## Bar Plot
 ##
+    
+    U_data = university_df(source, U_Name)
+    new_U_data = pd.DataFrame()
+
+    for n in t_name:
+        temp = U_data.replace({"tier_name":list(U_data["tier_name"])}, {"tier_name":n}) 
+        new_U_data = pd.concat([new_U_data,temp])
+
+    s_new = pd.concat([new_U_data,s_new])
     
     color_scale1 = alt.Scale(
         domain=["pos","same","neg"],
         range=["green","orange","red"]
     )
 
-    bar_chart = alt.Chart(source).mark_bar().encode(
-        column = "tier_name:N",
-        y = alt.Y("name:N"),
-        x = "sum(MR):Q",
-        color = alt.Color('type:N', scale = color_scale1),
-        tooltip=["sum(MR_abs)", 'p']
+    # https://stackoverflow.com/questions/52223358/rename-tooltip-in-altair
+    s_new = s_new.reset_index()
+    income_class = ["Lower class", "Working class", "Lower middle class", "Upper middle class", "Upper class"]
+    
+    for i in range(0,5): 
+        s_new.loc[s_new["p"] == i+1, "p"] = income_class[i]
+
+    bar_chart = alt.Chart(s_new).mark_bar().encode(
+        y = alt.Y("name:N", 
+            axis=alt.Axis(title=None)
+            ),
+        x = alt.X("sum(MR):Q",
+            axis=alt.Axis(title="Mobility Rate")
+            ),
+        color = alt.Color('type:N', 
+            scale = color_scale1,
+            legend=alt.Legend(title=None)
+            ),
+        tooltip=[alt.Tooltip("sum(MR_abs)",title="Mobility Rate"), alt.Tooltip('p', title="Parent's Income Quintiles")]
     ).transform_filter(sel)
-
-
-    return ((cluster_plot+cross_u) & bar_chart).resolve_scale(color='independent').resolve_legend(color='independent')
+    
+    
+    cluster = cluster_plot+cross_u+cross_y
+    
+    return (cluster & bar_chart).resolve_scale(color='independent').resolve_legend(color='independent')
